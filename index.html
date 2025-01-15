@@ -6,6 +6,43 @@
     <title>Quiz</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Style for the modal */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.4); /* Black with opacity */
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <p id="osType"></p>
@@ -26,6 +63,19 @@
         </ul>
     </div>
 
+    <!-- Modal for Admin Actions -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Admin Actions</h2>
+            <h3>Select a Player to Kick</h3>
+            <select id="kickPlayerSelect"></select>
+            <button onclick="kickPlayer()">Kick Player</button>
+            <br><br>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
     <script>
         const dc = document;
         dc.addEventListener("DOMContentLoaded", function () {
@@ -44,9 +94,6 @@
             const osTxt = dc.getElementById('osType');
             osTxt.innerText = `OS: ${checkOSType(ua)}`;
 
-           
-
-
             const pwdHash = 'afb0800d12f4feef9c23b00ba8362df047f97844'; 
 
             const passwordPrompt = dc.getElementById("pwdPmpt");
@@ -61,6 +108,7 @@
                     if (checkHash === pwdHash) {
                         passwordFeedback.innerText = "Access granted!";
                         passwordFeedback.style.color = "green";
+                        openModal();  // Open the admin panel when password is correct
                     } else {
                         passwordFeedback.innerText = "Incorrect password.";
                         passwordFeedback.style.color = "red";
@@ -77,6 +125,8 @@
                 .then(data => {
                     const playerList = dc.getElementById('active-players');
                     playerList.innerHTML = '';
+                    const kickPlayerSelect = dc.getElementById('kickPlayerSelect');
+                    kickPlayerSelect.innerHTML = ''; // Reset select options
 
                     if (Object.keys(data).length === 0) {
                         const noPlayersMessage = dc.createElement('li');
@@ -87,12 +137,47 @@
                             const listItem = dc.createElement('li');
                             listItem.textContent = data[uuid];
                             playerList.appendChild(listItem);
+
+                            const option = dc.createElement('option');
+                            option.value = uuid;
+                            option.textContent = data[uuid];
+                            kickPlayerSelect.appendChild(option);
                         }
                     }
                 });
         }
 
         setInterval(fetchActivePlayers, 2000);
+
+        function openModal() {
+            dc.getElementById("adminModal").style.display = "block";
+        }
+
+        function closeModal() {
+            dc.getElementById("adminModal").style.display = "none";
+        }
+
+        function kickPlayer() {
+            const playerToKick = dc.getElementById('kickPlayerSelect').value;
+            if (playerToKick) {
+                fetch(`https://21df0a89-4924-4742-b6d4-a1e0c4e31897-00-107ideld7md7i.picard.replit.dev:3000/kickPlayer?player=${playerToKick}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("Player kicked!");
+                        fetchActivePlayers(); // Refresh the player list
+                    });
+            } else {
+                alert("Please select a player to kick.");
+            }
+        }
+
+        function startGame() {
+            fetch('https://21df0a89-4924-4742-b6d4-a1e0c4e31897-00-107ideld7md7i.picard.replit.dev:3000/startGame')
+                .then(response => response.json())
+                .then(data => {
+                    alert("Game started!");
+                });
+        }
     </script>
 </body>
 </html>
