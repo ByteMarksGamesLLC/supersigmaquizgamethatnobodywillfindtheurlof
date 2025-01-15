@@ -46,6 +46,8 @@
 
     <script>
         const dc = document;
+        let playerWindow = null;
+
         dc.addEventListener("DOMContentLoaded", function () {
             const ua = navigator.userAgent;
 
@@ -95,21 +97,29 @@
             fetch('https://21df0a89-4924-4742-b6d4-a1e0c4e31897-00-107ideld7md7i.picard.replit.dev:3000/getActivePlayers')
                 .then(response => response.json())
                 .then(data => {
-                    const playerList = dc.getElementById('active-players');
-                    playerList.innerHTML = ''; // Reset the main list
-
-                    if (Object.keys(data).length === 0) {
-                        const noPlayersMessage = dc.createElement('li');
-                        noPlayersMessage.textContent = 'No active players.';
-                        playerList.appendChild(noPlayersMessage);
-                    } else {
-                        for (let uuid in data) {
-                            const listItem = dc.createElement('li');
-                            listItem.textContent = data[uuid];
-                            playerList.appendChild(listItem);
-                        }
+                    updatePlayerList(data, 'active-players');
+                    if (playerWindow && !playerWindow.closed) {
+                        updatePlayerList(data, 'active-players-popout', playerWindow.document);
                     }
                 });
+        }
+
+        function updatePlayerList(data, listId, targetDoc = document) {
+            const playerList = targetDoc.getElementById(listId);
+            if (!playerList) return;
+            
+            playerList.innerHTML = ''; // Clear the list
+            if (Object.keys(data).length === 0) {
+                const noPlayersMessage = targetDoc.createElement('li');
+                noPlayersMessage.textContent = 'No active players.';
+                playerList.appendChild(noPlayersMessage);
+            } else {
+                for (let uuid in data) {
+                    const listItem = targetDoc.createElement('li');
+                    listItem.textContent = data[uuid];
+                    playerList.appendChild(listItem);
+                }
+            }
         }
 
         setInterval(fetchActivePlayers, 2000);
@@ -123,27 +133,11 @@
         }
 
         function popOutPlayerList() {
-            const playerWindow = window.open('', '_blank', 'width=400,height=600');
-            playerWindow.document.write('<html><head><title>Active Players</title></head><body>');
-            playerWindow.document.write('<h2>Active Players</h2><ul id="active-players-popout">');
-
-            fetch('https://21df0a89-4924-4742-b6d4-a1e0c4e31897-00-107ideld7md7i.picard.replit.dev:3000/getActivePlayers')
-                .then(response => response.json())
-                .then(data => {
-                    if (Object.keys(data).length === 0) {
-                        const noPlayersMessage = playerWindow.document.createElement('li');
-                        noPlayersMessage.textContent = 'No active players.';
-                        playerWindow.document.getElementById('active-players-popout').appendChild(noPlayersMessage);
-                    } else {
-                        for (let uuid in data) {
-                            const listItem = playerWindow.document.createElement('li');
-                            listItem.textContent = data[uuid];
-                            playerWindow.document.getElementById('active-players-popout').appendChild(listItem);
-                        }
-                    }
-                });
-
-            playerWindow.document.write('</ul></body></html>');
+            if (!playerWindow || playerWindow.closed) {
+                playerWindow = window.open('', '_blank', 'width=400,height=600');
+                playerWindow.document.write('<html><head><title>Active Players</title></head><body>');
+                playerWindow.document.write('<h2>Active Players</h2><ul id="active-players-popout"></ul></body></html>');
+            }
         }
 
         function kickPlayer() {
