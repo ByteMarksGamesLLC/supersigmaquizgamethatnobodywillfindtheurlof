@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <p id="osType"></p>
+
+    <label for="pwdPmpt">Developer Panel Password:</label>
+    <input id="pwdPmpt" type="password" placeholder="Enter password">
+    <p id="passwordFeedback"></p>
+
+    <label for="username">Username:</label>
+    <input id="username">
+    
+    <button onclick="fetch(`http:\/\/localhost:3000/join?username=${document.getElementById('username').value}`)">Join</button>
+
+    <div id="players-list">
+        <h2>Active Players</h2>
+        <ul id="active-players">
+            <!-- Players will be listed here dynamically -->
+        </ul>
+    </div>
+
+    <script>
+        const dc = document;
+        dc.addEventListener("DOMContentLoaded", function () {
+            const ua = navigator.userAgent;
+
+            function checkOSType(userAgent) {
+                if (/Windows NT 10\.0/i.test(userAgent) && /Win64/i.test(userAgent)) {
+                    return "Windows";
+                }
+                if (/android/i.test(userAgent)) {
+                    return "Android";
+                }
+                return "Unknown OS.";
+            }
+
+            const osTxt = dc.getElementById('osType');
+            osTxt.innerText = `OS: ${checkOSType(ua)}`;
+
+           
+
+
+            const pwdHash = 'afb0800d12f4feef9c23b00ba8362df047f97844'; 
+
+            const passwordPrompt = dc.getElementById("pwdPmpt");
+            const passwordFeedback = dc.getElementById("passwordFeedback");
+
+            passwordPrompt.addEventListener("input", function() {
+                const enteredPassword = passwordPrompt.value.trim(); 
+
+                if (enteredPassword) {
+                    const checkHash = CryptoJS.SHA1(enteredPassword).toString(CryptoJS.enc.Hex);
+
+                    if (checkHash === pwdHash) {
+                        passwordFeedback.innerText = "Access granted!";
+                        passwordFeedback.style.color = "green";
+                    } else {
+                        passwordFeedback.innerText = "Incorrect password.";
+                        passwordFeedback.style.color = "red";
+                    }
+                } else {
+                    passwordFeedback.innerText = "";
+                }
+            });
+        });
+
+        function fetchActivePlayers(){
+            fetch('http://localhost:3000/getActivePlayers')
+                .then(response => response.json())
+                .then(data => {
+                    const playerList = dc.getElementById('active-players');
+                    playerList.innerHTML = '';
+
+                    if (Object.keys(data).length === 0) {
+                        const noPlayersMessage = dc.createElement('li');
+                        noPlayersMessage.textContent = 'No active players.';
+                        playerList.appendChild(noPlayersMessage);
+                    } else {
+                        for(let uuid in data){
+                            const listItem = dc.createElement('li');
+                            listItem.textContent = data[uuid];
+                            playerList.appendChild(listItem);
+                        }
+                    }
+                });
+        }
+
+        setInterval(fetchActivePlayers, 2000);
+    </script>
+</body>
+</html>
