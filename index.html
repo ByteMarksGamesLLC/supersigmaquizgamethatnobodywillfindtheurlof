@@ -138,8 +138,9 @@
                             listItem.textContent = data[uuid];
                             playerList.appendChild(listItem);
 
+                            // Adding the player name to the dropdown for kicking
                             const option = dc.createElement('option');
-                            option.value = username;
+                            option.value = data[uuid]; // Using player name instead of UUID
                             option.textContent = data[uuid];
                             kickPlayerSelect.appendChild(option);
                         }
@@ -160,7 +161,7 @@
         function kickPlayer() {
             const playerToKick = dc.getElementById('kickPlayerSelect').value;
             if (playerToKick) {
-                fetch(`https://21df0a89-4924-4742-b6d4-a1e0c4e31897-00-107ideld7md7i.picard.replit.dev:3000/kick?player=${playerToKick}`)
+                fetch(`https://21df0a89-4924-4742-b6d4-a1e0c4e31897-00-107ideld7md7i.picard.replit.dev:3000/kickPlayer?player=${playerToKick}`)
                     .then(response => response.json())
                     .then(data => {
                         alert("Player kicked!");
